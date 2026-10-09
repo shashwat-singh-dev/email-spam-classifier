@@ -1,168 +1,170 @@
+<div align="center">
+
 # Email Spam Classifier
 
-A machine learning web application that classifies email messages as **Spam** or **Ham (Legitimate)** using TF-IDF feature extraction and Logistic Regression.
+**An end-to-end machine learning application that classifies email text as spam or ham and returns class probabilities.**
 
-The application provides an interactive frontend and a FastAPI backend that returns predictions and class probabilities.
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 
-## Features
+[Repository](https://github.com/shashwat-singh-dev/email-spam-classifier)
 
-- Email spam classification using Logistic Regression
-- Text preprocessing and TF-IDF vectorization
-- Unigram and bigram feature extraction
-- Class balancing to improve spam detection
-- Hyperparameter tuning using the regularization parameter `C`
-- Spam and ham probability scores
-- Interactive web interface with visual probability bars
-- FastAPI prediction endpoint
-- Model persistence using Joblib
+</div>
 
-## Tech Stack
+---
 
-| Category | Technologies |
-|---|---|
-| Language | Python, JavaScript |
-| Machine Learning | Scikit-learn, Logistic Regression |
-| NLP | TF-IDF, text preprocessing, n-grams |
-| Backend | FastAPI, Pydantic |
-| Frontend | HTML, CSS, JavaScript |
-| Model Storage | Joblib |
-| Development | Jupyter Notebook, VS Code, Git, GitHub |
+## Overview
 
-## Machine Learning Workflow
+Email Spam Classifier takes raw email text and predicts whether it is **Spam** (suspicious or unsolicited) or **Ham** (legitimate). A TF-IDF + Logistic Regression model is served through a **FastAPI** `/predict` endpoint and consumed by an interactive HTML/CSS/JavaScript interface.
 
-1. **Data loading:** Loaded the email dataset containing ham and spam messages.
-2. **Data cleaning:** Removed duplicate records and cleaned the email text.
-3. **Train-test split:** Split the data into training and testing sets.
-4. **Feature extraction:** Converted email text into numerical features using TF-IDF.
-5. **Baseline model:** Trained a Logistic Regression classifier.
-6. **Model improvement:** Tested class weighting, bigram features, and different values of `C`.
-7. **Validation:** Used a separate validation split to evaluate model configurations.
-8. **Final evaluation:** Retrained the selected configuration on the full training set and evaluated it on the held-out test set.
-9. **Deployment interface:** Saved the trained model and vectorizer, exposed predictions through FastAPI, and connected the API to a web frontend.
+The project covers the full workflow from raw CSV to a working application: cleaning, feature extraction, error-driven model improvement, serialization, API serving, and frontend integration. It runs locally and is not deployed online.
 
-## Model Improvements
+## Highlights
 
-The initial baseline achieved approximately **96.13% accuracy**, but its spam recall was around **74.48%**, meaning it missed a noticeable proportion of spam messages.
+- Spam vs. ham classification with **probability scores for both classes**
+- **TF-IDF** features using unigrams and bigrams (`ngram_range=(1, 2)`)
+- **Class-weighted Logistic Regression** to improve spam recall
+- **FastAPI** prediction endpoint with Pydantic request validation
+- Interactive web interface for entering an email and viewing the result
+- Model and vectorizer saved with Joblib and loaded at inference time
 
-The following improvements were explored:
+## Model Performance
 
-- **Class weighting:** Used `class_weight="balanced"` to give greater importance to the minority spam class.
-- **Bigram features:** Used `ngram_range=(1, 2)` to capture individual words and two-word combinations.
-- **Hyperparameter tuning:** Evaluated `C` values of `0.1`, `1.0`, and `10.0`.
-- **Validation split:** Evaluated the selected configuration on a separate validation set before final testing.
+Final held-out test results (rounded values reported from the project):
 
-### Final Model Configuration
+| Metric | Result |
+|---|---:|
+| Accuracy | ~98% |
+| Spam precision | ~92% |
+| Spam recall | ~92% |
+| Spam F1-score | ~0.92 |
+
+**Baseline vs. final (supported metrics only)**
+
+| Model | Accuracy | Spam recall |
+|---|---:|---:|
+| Baseline Logistic Regression | ~96.13% | ~74.48% |
+| Final (balanced class weights + bigrams, tuned `C`) | ~98% | ~92% |
+
+> Values are approximate, rounded figures from the project's classification reports, not exact measurements.
+
+**Why recall and F1 matter:** only a minority of emails are spam, so accuracy alone can look strong while many spam messages slip through. The baseline showed this: ~96% accuracy but only ~74% spam recall. Spam recall shows how much spam is caught, precision shows how often a spam flag is correct, and F1 balances the two.
+
+## How It Works
+
+```mermaid
+flowchart LR
+    A[Dataset] --> B[Cleaning]
+    B --> C[Text Preprocessing]
+    C --> D[TF-IDF]
+    D --> E[Logistic Regression]
+    E --> F[Evaluation]
+    F --> G[FastAPI]
+    G --> H[Web Interface]
+```
+
+**Data**
+- Kaggle email spam dataset: 5,572 rows, 5 columns, loaded with `encoding="latin-1"`
+- `v1` renamed to `label`, `v2` to `email`; three mostly empty columns removed
+- 403 duplicate rows removed, leaving **5,169 rows**
+
+**Preprocessing:** lowercase text, remove punctuation, normalize whitespace.
+
+**Split:** 80/20 train/test, `random_state=42`. TF-IDF is fitted on training data only to avoid data leakage.
+
+**Final model**
 
 ```python
 TfidfVectorizer(ngram_range=(1, 2))
-
-LogisticRegression(
-    C=10.0,
-    class_weight="balanced",
-    max_iter=1000
-)
+LogisticRegression(C=10.0, class_weight="balanced", max_iter=1000)
 ```
 
-## Results
+**Improvement path:** the baseline's weak spam recall was found through precision/recall/F1 and confusion-matrix analysis. It was then addressed with `class_weight="balanced"`, bigram features, and tuning of `C`, using a separate validation split before the final training and test evaluation.
 
-The final held-out test evaluation achieved approximately **97.5%+ accuracy**, with an approximately **0.92 F1-score for the spam class**.
-
-| Metric | Approximate result |
-|---|---:|
-| Accuracy | 97.5%+ |
-| Spam precision | 0.92 |
-| Spam recall | 0.92 |
-| Spam F1-score | 0.92 |
-
-*Values are approximate, based on the final classification report. Results may vary if the dataset split or training configuration changes.*
+**Saved artifacts:** `spam_model_v2.pkl`, `tfidf_vectorizer_v2.pkl`
 
 ## Project Structure
 
 ```text
 email-spam-classifier/
-├── app.py
-├── spam_model_v2.pkl
-├── tfidf_vectorizer_v2.pkl
+├── .gitignore
+├── app.py                    # FastAPI backend
+├── Load_data.ipynb           # Data exploration, preprocessing, training, evaluation
 ├── requirements.txt
-├── README.md
+├── spam_model_v2.pkl         # Trained Logistic Regression model
+├── tfidf_vectorizer_v2.pkl   # Fitted TF-IDF vectorizer
 └── frontend/
     ├── index.html
-    ├── style.css
-    └── script.js
+    ├── script.js
+    └── style.css
 ```
 
-Your notebook and dataset may also be present locally. Add them to the repository only if you intend to share them and the dataset's terms permit redistribution.
+The dataset file `email_spam.csv` is excluded via `.gitignore` and is not included in the repository.
 
-## Installation and Setup
+## Installation & Usage
 
-### 1. Clone the repository
+**1. Clone the repository**
 
 ```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL>
+git clone https://github.com/shashwat-singh-dev/email-spam-classifier.git
 cd email-spam-classifier
 ```
 
-### 2. Create a virtual environment
+**2. Create and activate a virtual environment**
 
 ```bash
 python -m venv venv
 ```
 
-Activate it on Windows:
+```bash
+# Windows
+venv\Scripts\activate
 
-```powershell
-.\venv\Scripts\Activate.ps1
+# macOS / Linux
+source venv/bin/activate
 ```
 
-### 3. Install dependencies
+**3. Install dependencies**
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Start the FastAPI backend
+**4. Start the backend**
 
 ```bash
 uvicorn app:app --reload
 ```
 
-The API will run locally at:
+- API: `http://127.0.0.1:8000`
+- Interactive docs: `http://127.0.0.1:8000/docs`
 
-`http://127.0.0.1:8000`
+**5. Open the frontend**
 
-Open the interactive API documentation at:
+Open `frontend/index.html` with VS Code Live Server or another local static server. The backend must be running.
 
-`http://127.0.0.1:8000/docs`
+> **Configuration notes:** the API URL used in `frontend/script.js` must point to the running backend. The backend's CORS settings must also allow the origin the frontend is served from (for example, the Live Server address). Otherwise the browser will block requests.
 
-### 5. Run the frontend
+## API
 
-Open `frontend/index.html` using VS Code Live Server.
+### `POST /predict`
 
-The JavaScript frontend currently sends requests to:
+Accepts email text and returns the predicted class with probabilities for both classes.
 
-```javascript
-http://127.0.0.1:8000/predict
-```
-
-Ensure the FastAPI server is running and its CORS configuration allows the frontend's origin.
-
-## API Usage
-
-**Endpoint:** `POST /predict`
-
-Request body:
+**Request**
 
 ```json
 {
-  "email": "Congratulations! You have won a prize. Claim your reward now."
+  "email": "Congratulations! You have won a free prize. Click here to claim."
 }
 ```
 
-The API returns the predicted class and class probabilities. For example, the response structure is:
+**Response** (illustrative example; actual values depend on the input and model)
 
 ```json
 {
-  "email": "Example email text",
+  "email": "Congratulations! You have won a free prize. Click here to claim.",
   "prediction": "spam",
   "probabilities": {
     "ham": 0.08,
@@ -171,34 +173,44 @@ The API returns the predicted class and class probabilities. For example, the re
 }
 ```
 
-*The probabilities above are illustrative, not a guaranteed prediction for that example.*
+> The response shape above is a representative example. The exact field names are defined in `app.py`.
 
-## Limitations
+## Tech Stack
 
-- Performance depends on the dataset and its representation of real-world emails.
-- The model may misclassify unfamiliar spam or legitimate messages.
-- TF-IDF and Logistic Regression do not fully understand context or intent.
-- Predicted probabilities are model estimates and should not be treated as perfectly calibrated certainty.
+| Category | Tools |
+|---|---|
+| Language | Python |
+| Data & ML | Pandas, Scikit-learn (TF-IDF, Logistic Regression), Joblib |
+| Backend | FastAPI, Pydantic |
+| Frontend | HTML, CSS, JavaScript |
+| Tooling | Jupyter Notebook, Git, GitHub |
+
+## What I Learned
+
+- **Preprocessing:** cleaning text and building features with TF-IDF and n-grams
+- **Class imbalance:** accuracy can hide poor spam detection, and class weighting directly targets it
+- **Evaluation:** reading precision, recall, F1, and confusion matrices, then using the errors to guide each improvement
+- **Tuning and validation:** tuning `C` on a separate validation split before the final test evaluation
+- **Leakage prevention:** fitting TF-IDF on training data only
+- **Serving ML:** saving and loading the model and vectorizer, and exposing inference through a FastAPI endpoint
+- **Integration:** connecting a frontend to a backend and resolving CORS issues
+- **Version control:** using Git, GitHub, and `.gitignore` to keep the dataset out of the repository
 
 ## Future Improvements
 
-- Deploy the frontend and backend publicly.
-- Add automated tests for the API and preprocessing.
-- Evaluate performance on newer, unseen email datasets.
-- Explore probability calibration and decision thresholds.
-- Add monitoring for changing spam patterns.
+*Planned. None of these are implemented yet.*
 
-## Key Learning Outcomes
+- Report cross-validation scores and a full confusion matrix
+- Compare additional models against the Logistic Regression baseline
+- Tune the decision threshold to balance precision and recall
+- Wrap preprocessing, vectorization, and the model in a single scikit-learn `Pipeline`
+- Add automated tests for the API
+- Containerize with Docker
+- Deploy the backend and frontend
 
-- Text preprocessing and feature engineering for NLP
-- TF-IDF vectorization and n-gram features
-- Logistic Regression and class imbalance handling
-- Precision, recall, F1-score, and confusion matrix analysis
-- Hyperparameter tuning and validation
-- Integrating a machine learning model with FastAPI and a frontend
+## Author
 
----
+**Shashwat**
+B.Tech student specializing in Artificial Intelligence and Machine Learning
 
-**Author:** Shashwat Singh
-
-**Note:** This project is for educational purposes. Do not rely on its predictions alone to make security-sensitive decisions.
+GitHub: [shashwat-singh-dev](https://github.com/shashwat-singh-dev)
