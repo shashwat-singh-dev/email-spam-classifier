@@ -1,0 +1,43 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Spam Classifier</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <main class="container">
+        <h1>Email Spam Classifier</h1>
+
+        <p class="subtitle">
+            Check whether an email is spam or legitimate.
+        </p>
+
+        <label for="emailInput">Enter your email text</label>
+
+        <textarea
+            id="emailInput"
+            placeholder="Paste your email here..."
+            rows="8"
+        ></textarea>
+
+        <button id="predictButton" type="button">
+            Check Email
+        </button>
+
+        <div
+            id="result"
+            class="result-card"
+            role="status"
+            aria-live="polite"
+            style="display: none;"
+        ></div>
+
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
